@@ -12,36 +12,21 @@ GearPad in their aircraft; it is not designed as an add-on.
 
 ## Installation
 
-### Preparation
+### Downloading
 
-FG EFB depends on `fg-canvas-html`, which is available from
-`https://github.com/tdammers/fg-canvas-html`. You can choose to install it
-manually, or you can use the included `build.sh` script to take care of it for
-you.
+- Clone the repository:
+  ```bash
+  git clone --recursive git@github.com:tdammers/fg-efb
+  ```
+- Run the build script:
+  ```bash
+  cd fg-efb
+  ./build.sh
+  ```
 
-#### Using the build.sh script
-
-Requirements:
-
-- `git`
-- `bash`
-- A GitHub account, because we're using the `git:` protocol to pull in the
-  code.
-- `rsync`
-
-These should all be readily available on any major Linux distro.
-
-Now just run the `./build.sh` script, and it will do the right thing.
-
-#### Manual installation using git
-
-- Clone https://github.com/tdammers/fg-canvas-html into `./Nasal/html`
-
-#### Manual installation from a source bundle
-
-- Download the source code zip from https://github.com/tdammers/fg-canvas-html 
-- Unzip
-- Move the contained `Nasal/html` directory into `fg-efb/Nasal/html`
+Alternatively, you can manually download the `fg-canvas-html` repo from
+https://github.com/tdammers/fg-canvas-html/, and copy the `Nasal/html`
+directory into the EFB project.
 
 ### Installing into your aircraft
 
