@@ -18,6 +18,12 @@ GearPad in their aircraft; it is not designed as an add-on.
   ```bash
   git clone --recursive git@github.com:tdammers/fg-efb
   ```
+  If you have already cloned the repository, but without `--recursive`, you can
+  also do this instead:
+  ```bash
+  cd fg-efb
+  git submodule update --init
+  ```
 - Run the build script:
   ```bash
   cd fg-efb
@@ -51,6 +57,12 @@ directory into the EFB project.
             <file>Aircraft/{your aircraft directory}/Nasal/efb.nas</file>
         </efb>
     ```
+  - In `/sim/systems`:
+    ```xml
+      <property-rule n="103">
+          <path>Aircraft/{your aircraft directory}/Systems/EFB.xml</path>
+      </property-rule>
+    ```
   - In `/sim/aircraft-data`: 
     ```xml
       <path>/instrumentation/efb/available</path>
@@ -62,7 +74,7 @@ directory into the EFB project.
   Something like this should work:
   ```xml
     <model>
-        <path>Aircraft/E-jet-family/Models/EFB/EFB.xml</path>
+        <path>Aircraft/{your aircraft directory}/Models/EFB/EFB.xml</path>
         <name>EFB1</name>
         <offsets>
             <x-m>-12.3</x-m>
