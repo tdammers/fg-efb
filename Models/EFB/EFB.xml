@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+
+<PropertyList>
+
+    <path>Aircraft/E-jet-family/Models/EFB/efb.ac</path>
+
+    <animation>
+        <type>material</type>
+        <object-name>EFBScreen</object-name>
+        <emission>
+            <red>0.75</red>
+            <green>0.8</green>
+            <blue>0.9</blue>
+            <factor-prop>/instrumentation/efb/brightness</factor-prop>
+        </emission>
+    </animation>
+
+    <animation>
+        <type>touch</type>
+        <object-name>EFBScreen</object-name>
+        <action>
+            <touch>0</touch>
+            <repeatable>false</repeatable>
+            <binding>
+                <command>nasal</command>
+                <script><![CDATA[
+                    var efb = efb.efb;
+                    if (efb != nil) {
+                        efb.touch(cmdarg().getValues());
+                    }
+                ]]></script>
+            </binding>
+        </action>
+    </animation>
+
+    <animation>
+        <type>pick</type>
+        <object-name>EFBScreen.Pane</object-name>
+        <action>
+            <button>3</button>
+            <binding>
+                <command>nasal</command>
+                <script><![CDATA[
+                    var efb = efb.efb;
+                    if (efb != nil) {
+                        efb.wheel(0, -1);
+                    }
+                ]]></script>
+            </binding>
+        </action>
+        <action>
+            <button>4</button>
+            <binding>
+                <command>nasal</command>
+                <script><![CDATA[
+                    var efb = efb.efb;
+                    if (efb != nil) {
+                        efb.wheel(0, 1);
+                    }
+                ]]></script>
+            </binding>
+        </action>
+    </animation>
+
+    <animation>
+        <type>select</type>
+        <condition>
+            <property>/instrumentation/efb/available</property>
+        </condition>
+    </animation>
+
+    <animation>
+        <type>rotate</type>
+        <axis>
+            <x>-1.0</x>
+            <y>0.0</y>
+            <z>0.0</z>
+        </axis>
+        <property>/instrumentation/efb/orientation-norm</property>
+        <factor>90</factor>
+    </animation>
+
+    <animation>
+        <type>pick</type>
+        <object-name>Case</object-name>
+        <action>
+            <button>0</button>
+            <binding>
+                <command>property-cycle</command>
+                <property>/instrumentation/efb/selected-orientation-norm</property>
+                <value type="double">0</value>
+                <value type="double">1</value>
+            </binding>
+        </action>
+        <action>
+            <button>1</button>
+            <binding>
+                <command>nasal</command>
+                <script><![CDATA[
+                    printf("EFB reload...");
+                    efb.reload();
+                    printf("EFB reload done.");
+                ]]></script>
+            </binding>
+        </action>
+        <action>
+            <button>3</button>
+            <binding>
+                <command>property-adjust</command>
+                <property>/instrumentation/efb/brightness</property>
+                <step>0.05</step>
+                <min>0</min>
+                <max>1</max>
+                <wrap>false</wrap>
+            </binding>
+        </action>
+        <action>
+            <button>4</button>
+            <binding>
+                <command>property-adjust</command>
+                <property>/instrumentation/efb/brightness</property>
+                <step>-0.05</step>
+                <min>0</min>
+                <max>1</max>
+                <wrap>false</wrap>
+            </binding>
+        </action>
+    </animation>
+
+</PropertyList>
