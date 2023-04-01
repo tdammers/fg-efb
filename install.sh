@@ -8,11 +8,11 @@ then
 fi
 
 # dependencies
-rsync -r "$SRC/Nasal/html/" "$AIRCRAFT_DIR/Nasal/html/" --exclude ".git"
+rsync -r "$SRC_DIR/Nasal/html/" "$AIRCRAFT_DIR/Nasal/html/" --exclude ".git"
 
 # core files
-rsync -r "$SRC/Nasal/efb/" "$AIRCRAFT_DIR/Nasal/efb/"
-rsync -r "$SRC/Nasal/efb.nas" "$AIRCRAFT_DIR/Nasal/efb.nas"
-rsync -r "$SRC/Systems/EFB.xml" "$AIRCRAFT_DIR/Systems/EFB.xml"
-rsync -r "$SRC/Models/EFB/" "$AIRCRAFT_DIR/Models/EFB/"
-rsync -r "$SRC/Fonts/EFB/" "$AIRCRAFT_DIR/Fonts/EFB/"
+rsync -r "$SRC_DIR/Nasal/efb/" "$AIRCRAFT_DIR/Nasal/efb/"
+rsync -r "$SRC_DIR/Nasal/efb.nas" "$AIRCRAFT_DIR/Nasal/efb.nas"
+rsync -r "$SRC_DIR/Systems/EFB.xml" "$AIRCRAFT_DIR/Systems/EFB.xml"
+rsync -r "$SRC_DIR/Models/EFB/" "$AIRCRAFT_DIR/Models/EFB/"
+rsync -r "$SRC_DIR/Fonts/SteveHand/" "$AIRCRAFT_DIR/Fonts/SteveHand/"

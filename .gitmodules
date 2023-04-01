@@ -1,0 +1,3 @@
+[submodule "submodules/fg-canvas-html"]
+	path = submodules/fg-canvas-html
+	url = git@github.com:tdammers/fg-canvas-html
