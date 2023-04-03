@@ -10,7 +10,7 @@ globals.efb.registerApp_ = func(basedir, key, label, iconName, class) {
     globals.efb.availableApps[key] = {
         basedir: basedir,
         key: key,
-        icon: basedir ~ '/' ~ iconName,
+        icon: (iconName == nil) ? (acdir ~ '/Models/EFB/icons/unknown-app.png') : (basedir ~ '/' ~ iconName),
         label: label,
         loader: func (g) { return class.new(g); },
     };
@@ -31,9 +31,11 @@ if (contains(globals.efb, 'downloadManager')) {
 globals.efb.downloadManager = DownloadManager.new();
 
 var loadAppDir = func (basedir) {
+    printf("Scanning for apps in %s", basedir);
     var appFiles = directory(basedir) or [];
     foreach (var f; appFiles) {
         if (substr(f, 0, 1) != '.') {
+            printf("Found app: %s", f);
             var dirname = basedir ~ '/' ~ f;
             registerApp = func(key, label, iconName, class) {
                 print(dirname);
@@ -57,7 +59,7 @@ var EFB = {
         m.shellPage = 0;
         m.shellNumPages = 1;
         m.apps = [];
-        foreach (var k; keys(availableApps)) {
+        foreach (var k; sort(keys(availableApps), cmp)) {
             var app = availableApps[k];
             append(m.apps,
                 { icon: app.icon,
@@ -115,10 +117,10 @@ var EFB = {
     initialize: func() {
         me.shellGroup = me.master.createChild('group');
         me.shellPages = [];
+        me.setupBackgroundImage();
         me.background = me.shellGroup.createChild('path')
                             .rect(0, 0, 512, 768)
-                            .setColorFill(1, 1, 1);
-        me.setupBackgroundImage();
+                            .setColorFill(1, 1, 1, 0.5);
 
         me.clientGroup = me.master.createChild('group');
 
@@ -160,13 +162,14 @@ var EFB = {
             var bbox = img.getBoundingBox();
             var imgW = bbox[2];
             img.setTranslation((64 - imgW) / 2, 0);
-            var txt = app.shellIcon.createChild('text');
-            txt.setText(app.label);
-            txt.setColor(0, 0, 0);
-            txt.setAlignment('center-top');
-            txt.setTranslation(64, 70);
-            txt.setFont("LiberationFonts/LiberationSans-Regular.ttf");
-            txt.setFontSize(20);
+
+            app.shellIcon.createChild('text')
+                .setText(app.label)
+                .setColor(0, 0, 0)
+                .setAlignment('center-top')
+                .setTranslation(64, 70)
+                .setFont("LiberationFonts/LiberationSans-Regular.ttf")
+                .setFontSize(20);
         }
         var self = me;
         setlistener('/instrumentation/clock/local-short-string', func(node) {
