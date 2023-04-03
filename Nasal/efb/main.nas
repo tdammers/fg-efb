@@ -62,12 +62,42 @@ var EFB = {
         me.background = me.shellGroup.createChild('path')
                             .rect(0, 0, 512, 768)
                             .setColorFill(1, 1, 1);
-        me.background = me.shellGroup.createChild('image');
-        me.background.set('src', "Aircraft/E-jet-family/Models/EFB/efb.png");
+        var backgroundImagePaths = [];
+        var configuredBackgroundImage = getprop('/instrumentation/efb/background-image');
+        if (configuredBackgroundImage != nil) {
+            append(backgroundImagePaths, acdir ~ '/' ~ configuredBackgroundImage);
+        }
+        else {
+            var previewNodes = props.globals.getNode('/sim/previews').getChildren('preview');
+            foreach (var n; previewNodes) {
+                debug.dump(n);
+                var path = n.getValue('path');
+                if (path != nil) {
+                    append(backgroundImagePaths, acdir ~ '/' ~ path);
+                }
+            }
+        }
+        me.backgroundImg = me.shellGroup.createChild('image');
+        if (size(backgroundImagePaths) == 0) {
+            me.backgroundImg.set('src', acdir ~ '/Models/EFB/efb.png');
+        }
+        else {
+            var index = math.min(size(backgroundImagePaths) - 1, math.floor(rand() * size(backgroundImagePaths)));
+            var path = backgroundImagePaths[index];
+            me.backgroundImg.set('src', path);
+            (var w, var h) = me.backgroundImg.imageSize();
+            var minZoomX = 512 / w;
+            var minZoomY = 768 / h;
+            var zoom = math.max(minZoomX, minZoomY);
+            var dx = (512 - w * zoom) * 0.5;
+            var dy = (768 - h * zoom) * 0.5;
+            me.backgroundImg.setTranslation(dx, dy);
+            me.backgroundImg.setScale(zoom, zoom);
+        }
 
         me.clientGroup = me.master.createChild('group');
 
-        me.overlay = canvas.parsesvg(me.master, "Aircraft/E-jet-family/Models/EFB/overlay.svg", {'font-mapper': font_mapper});
+        me.overlay = canvas.parsesvg(me.master, acdir ~ "/Models/EFB/overlay.svg", {'font-mapper': font_mapper});
         me.clockElem = me.master.getElementById('clock.digital');
         me.shellNumPages = math.ceil(size(me.apps) / 20);
         for (var i = 0; i < me.shellNumPages; i += 1) {
