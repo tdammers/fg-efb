@@ -56,44 +56,54 @@ var EFB = {
         return m;
     },
 
+    setupBackgroundImage: func {
+        var backgroundImagePaths = [];
+
+        var appendPathsFromNodes = func (parentNode, selector) {
+            if (typeof(parentNode) == 'scalar')
+                parentNode = props.globals.getNode(parentNode);
+            if (parentNode == nil)
+                return;
+            var nodes = parentNode.getChildren(selector);
+            foreach (var n; nodes) {
+                var path = n.getValue();
+                if (path != nil) {
+                    append(backgroundImagePaths, acdir ~ '/' ~ path);
+                }
+            }
+        }
+
+        me.backgroundImg = me.shellGroup.createChild('image');
+
+        appendPathsFromNodes('/instrumentation/efb', 'background-image');
+        if (size(backgroundImagePaths) == 0) {
+            # Nothing configured, try previews
+            appendPathsFromNodes('/sim/previews', 'preview/path');
+        }
+        if (size(backgroundImagePaths) == 0) {
+            # Nothing suitable found yet, use the default image.
+            append(backgroundImagePaths, acdir ~ '/Models/EFB/wallpaper.jpg');
+        }
+        var index = math.min(size(backgroundImagePaths) - 1, math.floor(rand() * size(backgroundImagePaths)));
+        var path = backgroundImagePaths[index];
+        me.backgroundImg.set('src', path);
+        (var w, var h) = me.backgroundImg.imageSize();
+        var minZoomX = 512 / w;
+        var minZoomY = 768 / h;
+        var zoom = math.max(minZoomX, minZoomY);
+        var dx = (512 - w * zoom) * 0.5;
+        var dy = (768 - h * zoom) * 0.5;
+        me.backgroundImg.setTranslation(dx, dy);
+        me.backgroundImg.setScale(zoom, zoom);
+    },
+
     initialize: func() {
         me.shellGroup = me.master.createChild('group');
         me.shellPages = [];
         me.background = me.shellGroup.createChild('path')
                             .rect(0, 0, 512, 768)
                             .setColorFill(1, 1, 1);
-        var backgroundImagePaths = [];
-        var configuredBackgroundImage = getprop('/instrumentation/efb/background-image');
-        if (configuredBackgroundImage != nil) {
-            append(backgroundImagePaths, acdir ~ '/' ~ configuredBackgroundImage);
-        }
-        else {
-            var previewNodes = props.globals.getNode('/sim/previews').getChildren('preview');
-            foreach (var n; previewNodes) {
-                debug.dump(n);
-                var path = n.getValue('path');
-                if (path != nil) {
-                    append(backgroundImagePaths, acdir ~ '/' ~ path);
-                }
-            }
-        }
-        me.backgroundImg = me.shellGroup.createChild('image');
-        if (size(backgroundImagePaths) == 0) {
-            me.backgroundImg.set('src', acdir ~ '/Models/EFB/efb.png');
-        }
-        else {
-            var index = math.min(size(backgroundImagePaths) - 1, math.floor(rand() * size(backgroundImagePaths)));
-            var path = backgroundImagePaths[index];
-            me.backgroundImg.set('src', path);
-            (var w, var h) = me.backgroundImg.imageSize();
-            var minZoomX = 512 / w;
-            var minZoomY = 768 / h;
-            var zoom = math.max(minZoomX, minZoomY);
-            var dx = (512 - w * zoom) * 0.5;
-            var dy = (768 - h * zoom) * 0.5;
-            me.backgroundImg.setTranslation(dx, dy);
-            me.backgroundImg.setScale(zoom, zoom);
-        }
+        me.setupBackgroundImage();
 
         me.clientGroup = me.master.createChild('group');
 
