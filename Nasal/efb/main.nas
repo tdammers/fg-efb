@@ -64,6 +64,7 @@ var EFB = {
                 , label: app.label,
                 , loader: app.loader,
                 , key: app.key,
+                , basedir: app.basedir,
                 });
         }
         m.initialize();
@@ -235,7 +236,7 @@ var EFB = {
         if (appInfo.app == nil) {
             var masterGroup = me.clientGroup.createChild('group');
             appInfo.app = appInfo.loader(masterGroup);
-            appInfo.app.setAssetDir(appBasedir ~ '/' ~ appInfo.key ~ '/');
+            appInfo.app.setAssetDir(appInfo.basedir ~ '/');
             appInfo.app.initialize();
         }
         me.currentApp = appInfo.app;

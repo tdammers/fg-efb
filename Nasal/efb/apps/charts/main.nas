@@ -38,7 +38,7 @@ var ChartsApp = {
                         .rect(0, 0, 512, 768)
                         .setColorFill(128, 128, 128);
         me.bglogo = me.masterGroup.createChild('image')
-                        .set('src', acdir ~ '/Models/EFB/icons/flightbag-large.png')
+                        .set('src', me.assetDir ~ 'flightbag-large.png')
                         .setTranslation(256 - 128, 384 - 128);
         me.bgfog = me.masterGroup.createChild('path')
                         .rect(0, 0, 512, 768)
