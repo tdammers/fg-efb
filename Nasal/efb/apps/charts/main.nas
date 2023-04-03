@@ -1,4 +1,4 @@
-include('apps/base.nas');
+include('baseApp.nas');
 include('gui/pager.nas');
 include('/html/main.nas');
 

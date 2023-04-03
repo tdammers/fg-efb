@@ -8,8 +8,8 @@ then
 fi
 
 # core files
-rsync -r "$AIRCRAFT_DIR/Nasal/efb/" "$SRC_DIR/Nasal/efb/"
+rsync -r --delete "$AIRCRAFT_DIR/Nasal/efb/" "$SRC_DIR/Nasal/efb/"
 rsync -r "$AIRCRAFT_DIR/Nasal/efb.nas" "$SRC_DIR/Nasal/efb.nas"
 rsync -r "$AIRCRAFT_DIR/Systems/EFB.xml" "$SRC_DIR/Systems/EFB.xml"
-rsync -r "$AIRCRAFT_DIR/Models/EFB/" "$SRC_DIR/Models/EFB/"
-rsync -r "$AIRCRAFT_DIR/Fonts/SteveHand/" "$SRC_DIR/Fonts/SteveHand/"
+rsync -r --delete "$AIRCRAFT_DIR/Models/EFB/" "$SRC_DIR/Models/EFB/"
+rsync -r --delete "$AIRCRAFT_DIR/Fonts/SteveHand/" "$SRC_DIR/Fonts/SteveHand/"

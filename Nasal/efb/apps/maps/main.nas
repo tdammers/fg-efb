@@ -1,4 +1,4 @@
-include('apps/base.nas');
+include('baseApp.nas');
 
 var mapsBase = getprop("/sim/fg-home") ~ '/cache/maps';
 

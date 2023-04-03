@@ -2,17 +2,21 @@ var efb = nil;
 
 logprint(3, "EFB main module start");
 
-var appBasedir = acdir ~ '/Nasal/efb/apps';
+var systemAppBasedir = acdir ~ '/Nasal/efb/apps';
+var customAppBasedir = acdir ~ '/Nasal/efbapps';
 
 globals.efb.availableApps = {};
-globals.efb.registerApp = func(key, label, iconName, class) {
+globals.efb.registerApp_ = func(basedir, key, label, iconName, class) {
     globals.efb.availableApps[key] = {
+        basedir: basedir,
         key: key,
-        icon: acdir ~ '/Models/EFB/icons/' ~ iconName,
+        icon: basedir ~ '/' ~ iconName,
         label: label,
         loader: func (g) { return class.new(g); },
     };
 };
+
+var registerApp = nil;
 
 include('util.nas');
 include('downloadManager.nas');
@@ -26,12 +30,22 @@ if (contains(globals.efb, 'downloadManager')) {
 }
 globals.efb.downloadManager = DownloadManager.new();
 
-var appFiles = directory(appBasedir);
-foreach (var f; appFiles) {
-    if (substr(f, 0, 1) != '.' and substr(f, -4) == '.nas') {
-        include('apps/' ~ f);
+var loadAppDir = func (basedir) {
+    var appFiles = directory(basedir) or [];
+    foreach (var f; appFiles) {
+        if (substr(f, 0, 1) != '.') {
+            var dirname = basedir ~ '/' ~ f;
+            registerApp = func(key, label, iconName, class) {
+                print(dirname);
+                registerApp_(dirname, key, label, iconName, class);
+            }
+            io.load_nasal(dirname ~ '/main.nas', 'efb');
+        }
     }
-}
+};
+
+loadAppDir(systemAppBasedir);
+loadAppDir(customAppBasedir);
 
 var EFB = {
     new: func (master) {
