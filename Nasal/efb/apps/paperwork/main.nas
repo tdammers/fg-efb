@@ -10,7 +10,7 @@ var PaperworkApp = {
         m.pages = [];
         m.tocVisible = 0;
         m.tocAnimState = 0;
-        m.animTimer = nil;
+        m.tocAnimTimer = nil;
         m.entryMode = nil;
         return m;
     },
@@ -108,7 +108,7 @@ var PaperworkApp = {
             self.toggleTOC();
         }, me.tocWidget);
         me.updateTocViz();
-        me.animTimer = maketimer(1/30, func {
+        me.tocAnimTimer = maketimer(1/30, func {
             if (self.tocAnimState < self.tocVisible) {
                 self.tocAnimState += 0.1;
                 self.tocAnimState = math.min(self.tocAnimState, self.tocVisible);
@@ -120,23 +120,27 @@ var PaperworkApp = {
                 self.updateTocViz();
             }
         });
-        me.animTimer.simulatedTime = 1;
+        me.tocAnimTimer.simulatedTime = 1;
         me.hideKeyboard();
-        me.animTimer.start();
+        me.tocAnimTimer.start();
 
         me.showStartMenu();
     },
 
     scrollIntoView: func(elem) {
-        var pos = elem.getTransformedBounds();
-        var bottom = pos[3];
-        var idealDY = 460 - bottom;
-        var dy = math.min(0, idealDY);
-        me.contentGroup.setTranslation(0, dy);
+        var pos = elem.getBoundingBox();
+        debug.dump(pos);
+        var centerX = (pos[0] + pos[2]) * 0.5;
+        var centerY = (pos[3] + pos[1]) * 0.5;
+        var dx = 256 - (me.metrics.marginLeft + centerX) * 1.5;
+        var dy = (768 - 256) / 2 - centerY * 1.5;
+        me.contentGroup.setTranslation(dx, dy)
+                       .setScale(1.5, 1.5);
     },
 
     resetScroll: func() {
-        me.contentGroup.setTranslation(0, 0);
+        me.contentGroup.setTranslation(0, 0)
+                       .setScale(1, 1);
     },
 
     showKeyboard: func (mode=nil) {
@@ -169,9 +173,9 @@ var PaperworkApp = {
         me.hideTOC();
     },
 
-    startEntry: func (ident, elem, node, exitFunc, numeric=0) {
+    startEntry: func (ident, elem, box, node, exitFunc, numeric=0) {
         me.showKeyboard(numeric ? Keyboard.LAYER_SYM2 : Keyboard.LAYER_UPPER);
-        me.scrollIntoView(elem);
+        me.scrollIntoView(box);
         if (typeof(node) == 'scalar') {
             var nodePath = node;
             node = me.ofp.getNode(nodePath, 1);
@@ -249,11 +253,11 @@ var PaperworkApp = {
     },
 
     foreground: func {
-        me.animTimer.start();
+        me.tocAnimTimer.start();
     },
 
     background: func {
-        me.animTimer.stop();
+        me.tocAnimTimer.stop();
     },
 
     hideTOC: func () {
@@ -931,7 +935,7 @@ var PaperworkApp = {
                 if (self.entryMode == nil or self.entryMode.ident != ident) {
                     frame.show();
                     self.cancelEntry();
-                    self.startEntry(ident, text, node, func {
+                    self.startEntry(ident, text, box, node, func {
                         frame.hide();
                     });
                 }
@@ -1291,9 +1295,6 @@ var PaperworkApp = {
         var ofpList = directory(ofpDir);
         foreach (var ofpCandidate; ofpList) {
             if (substr(ofpCandidate, -4) == '.xml') {
-                # var ofpMaybe = call(io.readxml, [ofpDir ~ ofpCandidate], io);
-                # if (ofpMaybe == nil)
-                #     continue;
                 makeMenuItem(ofpCandidate, func {
                     if (self.loadOFPFile(ofpDir ~ ofpCandidate)) {
                         self.showStartMenu();
