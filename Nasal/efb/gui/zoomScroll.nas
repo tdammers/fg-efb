@@ -62,24 +62,22 @@ var ZoomScroll = {
         me.appendChild(
             Widget.new(me.btnZoomIn)
                 .setHandler(func () {
-                    printf("Zoom in");
                     self.onZoom.raise({amount: 1});
                 }));
         me.appendChild(
             Widget.new(me.btnZoomOut)
                 .setHandler(func () {
-                    printf("Zoom out");
                     self.onZoom.raise({amount: -1});
                 }));
         me.appendChild(
             Widget.new(me.btnScrollN)
                 .setHandler(func () {
-                    self.onScroll.raise({x: 0, y: 1});
+                    self.onScroll.raise({x: 0, y: -1});
                 }));
         me.appendChild(
             Widget.new(me.btnScrollS)
                 .setHandler(func () {
-                    self.onScroll.raise({x: 0, y: -1});
+                    self.onScroll.raise({x: 0, y: 1});
                 }));
         me.appendChild(
             Widget.new(me.btnScrollE)
@@ -94,7 +92,6 @@ var ZoomScroll = {
         me.appendChild(
             Widget.new(me.btnScrollReset)
                 .setHandler(func () {
-                    printf("Reset");
                     self.onReset.raise({});
                 }));
 

@@ -107,8 +107,8 @@ var MapsApp = {
     },
 
     updateZoomScroll: func () {
-        me.zoomDigital.setText('LVL');
-        me.zoomUnit.setText(sprintf("%1.0f", me.zoom));
+        me.zoomScroll.setZoom(me.zoom);
+        me.zoomScroll.setAutoCenter(me.centerOnAircraft);
         me.updateMap();
     },
     zoomIn: func () {
@@ -121,37 +121,47 @@ var MapsApp = {
         me.cancelAllRequests();
         me.updateZoomScroll();
     },
+
     scroll: func (dx, dy) {
         me.center[0] = math.min(77.5, math.max(-77.5, me.center[0] - dy * math.pow(0.5, me.zoom) * 50));
         me.center[1] = me.center[1] + dx * math.pow(0.5, me.zoom) * 50;
         me.centerOnAircraft = 0;
-        me.autoCenterMarker.hide();
         me.updateZoomScroll();
     },
+
     resetScroll: func () {
         var pos = geo.aircraft_position();
         me.center[0] = pos.lat();
         me.center[1] = pos.lon();
         me.centerOnAircraft = 1;
-        me.autoCenterMarker.show();
         me.updateZoomScroll();
     },
 
     makeZoomScrollOverlay: func () {
         var self = me;
-        me.overlay = me.masterGroup.createChild('group');
-        canvas.parsesvg(me.overlay, acdir ~ "/Models/EFB/zoom-scroll-overlay.svg", {'font-mapper': font_mapper});
-        me.zoomDigital = me.overlay.getElementById('zoomPercent.digital');
-        me.zoomUnit = me.overlay.getElementById('zoomPercent.unit');
-        me.autoCenterMarker = me.overlay.getElementById('autoCenterMarker');
 
-        me.makeClickable(me.overlay.getElementById('btnZoomIn'), func { self.zoomIn(); });
-        me.makeClickable(me.overlay.getElementById('btnZoomOut'), func { self.zoomOut(); } );
-        me.makeClickable(me.overlay.getElementById('btnScrollN'), func { self.scroll(0, -1); });
-        me.makeClickable(me.overlay.getElementById('btnScrollS'), func { self.scroll(0, 1); });
-        me.makeClickable(me.overlay.getElementById('btnScrollE'), func { self.scroll(1, 0); });
-        me.makeClickable(me.overlay.getElementById('btnScrollW'), func { self.scroll(-1, 0); });
-        me.makeClickable(me.overlay.getElementById('btnScrollReset'), func { self.resetScroll(); });
+        me.overlay = me.masterGroup.createChild('group');
+        me.zoomScroll = ZoomScroll.new(me.overlay);
+        me.rootWidget.appendChild(me.zoomScroll);
+
+        me.zoomScroll.setZoomFormat(
+            func 'LVL',
+            func (zoom) sprintf("%1.0f", zoom)
+        );
+        me.zoomScroll.onScroll.addListener(func (data) {
+            self.scroll(data.x, data.y);
+        });
+        me.zoomScroll.onZoom.addListener(func (data) {
+            if (data.amount > 0)
+                self.zoomIn();
+            else
+                self.zoomOut();
+        });
+
+        me.zoomScroll.onReset.addListener(func {
+            me.resetScroll();
+        });
+
         me.updateZoomScroll();
     },
 

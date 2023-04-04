@@ -348,7 +348,7 @@ var ChartsApp = {
 
         me.zoomScroll.onScroll.addListener(func (data) {
             self.sx += data.x * 16;
-            self.sy -= data.y * 16;
+            self.sy += data.y * 16;
             self.updateScroll();
         });
         me.zoomScroll.onZoom.addListener(func (data) {
