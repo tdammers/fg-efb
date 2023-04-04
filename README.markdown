@@ -49,6 +49,8 @@ directory into the EFB project.
             <orientation-norm type="double">0</orientation-norm>
             <selected-orientation-norm type="double">0</selected-orientation-norm>
             <flightbag-companion-uri type="string">http://localhost:7675/</flightbag-companion-uri>
+            <allow-keyboard-grabbing type="bool">false</allow-keyboard-grabbing>
+            <keyboard-grabbed type="int">0</keyboard-grabbed>
         </efb>
     ```
   - In `/nasal`:
@@ -68,6 +70,7 @@ directory into the EFB project.
       <path>/instrumentation/efb/available</path>
       <path>/instrumentation/efb/brightness</path>
       <path>/instrumentation/efb/flightbag-companion-uri</path>
+      <path>/instrumentation/efb/allow-keyboard-grabbing</path>
     ```
 - Edit your model XML to place the `Models/EFB/EFB.xml` model in a suitable
   location.
@@ -95,3 +98,6 @@ directory into the EFB project.
   - `/instrumentation/efb/flightbag-companion-uri` (this points to the URI
     where the companion app can be reached; `localhost:7675` is the default for
     [fg-efb-server](https://github.com/fg-efb-server).
+  - `/instrumentation/efb/allow-keyboard-grabbing` (boolean; if set, allows
+    the EFB to grab physical keyboard inputs whenever an on-screen keyboard is
+    displayed on the EFB).

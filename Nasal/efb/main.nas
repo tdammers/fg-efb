@@ -2,6 +2,9 @@ var efb = nil;
 
 logprint(3, "EFB main module start");
 
+# Un-grab the keyboard in case it was still grabbed by a previous instance
+props.globals.getNode('/instrumentation/efb/keyboard-grabbed', 1).setValue(0);
+
 var systemAppBasedir = acdir ~ '/Nasal/efb/apps';
 var customAppBasedir = acdir ~ '/Nasal/efbapps';
 
