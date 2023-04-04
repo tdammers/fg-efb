@@ -285,7 +285,10 @@ var PaperworkApp = {
 
     loadSimbriefOFP: func () {
         var filename = getprop('/sim/fg-home') ~ "/Export/simbrief.xml";
-        debug.dump(filename);
+        return me.loadOFPFile(filename);
+    },
+
+    loadOFPFile: func (filename) {
         var err = [];
         me.ofp = call(io.readxml, [filename], io, {}, err);
         return me.ofp != nil;
@@ -1291,7 +1294,14 @@ var PaperworkApp = {
                 # var ofpMaybe = call(io.readxml, [ofpDir ~ ofpCandidate], io);
                 # if (ofpMaybe == nil)
                 #     continue;
-                makeMenuItem(ofpCandidate, func { print(ofpCandidate); });
+                makeMenuItem(ofpCandidate, func {
+                    if (self.loadOFPFile(ofpDir ~ ofpCandidate)) {
+                        self.showStartMenu();
+                    }
+                    else {
+                        self.showError('Something went wrong');
+                    }
+                });
             }
         }
     },
