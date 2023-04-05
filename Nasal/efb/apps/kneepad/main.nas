@@ -11,6 +11,7 @@ var KneepadApp = {
         m.text = [];
         m.editing = 0;
         m.cursor = { row: 0, col: 0 };
+        m.cursorBlinkState = 0;
         return m;
     },
 
@@ -31,7 +32,7 @@ var KneepadApp = {
 
         me.bgfill = me.masterGroup.createChild('path')
                         .rect(0, 0, 512, 768)
-                        .setColorFill(1, 1, 1);
+                        .setColorFill(1, 0.95, 0.8);
         me.textGroup = me.masterGroup.createChild('group')
                          .setTranslation(0, 0);
         me.dummyGroup = me.masterGroup.createChild('group')
@@ -40,6 +41,26 @@ var KneepadApp = {
                          .setFont(font_mapper(me.metrics.font, 'normal'))
                          .setFontSize(me.metrics.fontSize)
                          .setAlignment('left-baseline');
+        
+        me.menuGroup = me.masterGroup.createChild('group')
+                         .setTranslation(0, 768-96);
+        var menuBox = me.menuGroup.createChild('path')
+                    .rect(-1, 0, 514, 256)
+                    .setColorFill(0.9, 0.9, 0.9)
+                    .setColor(0.5, 0.5, 0.5);
+
+        # Menu widget eats clicks on the menu area.
+        me.menu = Widget.new(menuBox).setHandler(func {
+            return 0;
+        });
+
+        me.menu.appendChild(
+            Widget.new(
+                me.menuGroup.createChild('image')
+                         .set('src', acdir ~ '/Models/EFB/icons/trash.png')
+                         .setScale(0.75, 0.75)
+                         .setTranslation(10, 10)
+            ).setHandler(func self.clearText()));
 
         me.keyboardGroup = me.masterGroup.createChild('group');
         me.keyboard = Keyboard.new(me.keyboardGroup, 0);
@@ -52,7 +73,7 @@ var KneepadApp = {
                         .rect(0, 0, 1, me.metrics.fontSize + 4);
         me.cursorInfo = me.masterGroup.createChild('text')
                          .setFont(font_mapper(me.metrics.font, 'normal'))
-                         .setFontSize(me.metrics.fontSize)
+                         .setFontSize(16)
                          .setColor(0, 0, 0)
                          .setText('')
                          .setTranslation(510, 60)
@@ -61,7 +82,15 @@ var KneepadApp = {
         me.textElems = [];
 
         me.rootWidget.appendChild(me.keyboard);
+        me.rootWidget.appendChild(me.menu);
         me.hideKeyboard();
+        me.cursorBlinkTimer = maketimer(0.5, func {
+            if (me.editing) {
+                me.cursorBlinkState = !me.cursorBlinkState;
+                me.cursorElem.setVisible(me.cursorBlinkState);
+            }
+        });
+        me.cursorBlinkTimer.start();
     },
 
     showKeyboard: func () {
@@ -78,6 +107,11 @@ var KneepadApp = {
 
     background: func {
         me.hideKeyboard();
+        me.cursorBlinkTimer.stop();
+    },
+
+    foreground: func {
+        me.cursorBlinkTimer.start();
     },
 
     rowToY: func (row) {
@@ -172,18 +206,29 @@ var KneepadApp = {
         var scrollPercent = 0;
         if (me.maxScrollY > 0)
             scrollPercent = me.scrollY / me.maxScrollY * 100;
-        me.cursorInfo.setText(sprintf("%3i:%3i %3i%%", me.cursor.row, me.cursor.col, scrollPercent));
+        me.cursorInfo.setText(sprintf("%3i:%3i", me.cursor.row, me.cursor.col));
         if (me.editing) {
             var xy = me.cursorToXY();
             me.cursorElem
                     .setTranslation(xy.x, xy.y - me.metrics.fontSize)
                     .show();
-            me.cursorInfo.setColor(1, 0, 0);
+            me.cursorInfo.setColor(0, 0, 0);
         }
         else {
             me.cursorElem.hide();
             me.cursorInfo.setColor(0.6, 0.6, 0.6);
         }
+    },
+
+    clearText: func {
+        me.text = [];
+        foreach (var elem; me.textElems) {
+            elem.setText('');
+        }
+        me.cursor.row = 0;
+        me.cursor.col = 0;
+        me.scrollToRow(0);
+        me.updateCursor();
     },
 
     insertChar: func (c) {
