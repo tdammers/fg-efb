@@ -75,7 +75,7 @@ var MapsApp = {
         #           .setColor(0, 0, 1);
         #     }
         # }
-        me.infoText = me.contentGroup.createChild('text')
+        me.infoText = me.masterGroup.createChild('text')
             .setText('')
             .setFont(font_mapper('sans', 'normal'))
             .setFontSize(12, 1)
@@ -98,6 +98,7 @@ var MapsApp = {
                         .rect(0, 0, 512, 768)
                         .setColorFill(128, 128, 192);
         me.contentGroup = me.masterGroup.createChild('group');
+        me.contentGroup.setCenter(256, 384);
         me.initializeTiles();
         me.makeZoomScrollOverlay();
         me.updateTimer = maketimer(0.1, func {
@@ -141,7 +142,7 @@ var MapsApp = {
         var self = me;
 
         me.overlay = me.masterGroup.createChild('group');
-        me.zoomScroll = ZoomScroll.new(me.overlay);
+        me.zoomScroll = ZoomScroll.new(me.overlay, 1);
         me.rootWidget.appendChild(me.zoomScroll);
 
         me.zoomScroll.setZoomFormat(
@@ -172,6 +173,18 @@ var MapsApp = {
             elsif (amount < 0)
                 me.zoomIn();
         }
+    },
+
+    rotate: func (rotationNorm, hard=0) {
+        call(BaseApp.rotate, [rotationNorm], me);
+        var phi = 0.5 * math.pi * rotationNorm;
+        me.contentGroup.setRotation(-phi);
+        me.infoText
+            .setRotation(-phi)
+            .setTranslation(
+                10 + (502 - 10) * math.sin(phi),
+                730
+            );
     },
 
     updateMap: func () {
@@ -222,8 +235,6 @@ var MapsApp = {
         ];
 
         me.tileIndex = [math.floor(offset[0]), math.floor(offset[1])];
-        me.contentGroup.setCenter(256, 384).setRotation(getprop('/instrumentation/efb/orientation-norm') * math.pi * -0.5);
-        me.overlay.setCenter(360, 360).setRotation(getprop('/instrumentation/efb/orientation-norm') * math.pi * -0.5);
 
         if (me.tileIndex[0] != me.lastTile[0] or
             me.tileIndex[1] != me.lastTile[1]) {

@@ -3,7 +3,7 @@ include('util.nas');
 include('eventSource.nas');
 
 var ZoomScroll = {
-    new: func (parentGroup) {
+    new: func (parentGroup, followRotation=0) {
         var m = Widget.new();
         m.parents = [me] ~ m.parents;
         m.onScroll = EventSource.new();
@@ -13,6 +13,9 @@ var ZoomScroll = {
         m.autoCenter = 0;
         m.fmtZoom = func(zoom) { sprintf('%i', zoom * 100); };
         m.fmtUnit = func(zoom) { return '%'; };
+        m.followRotation = followRotation;
+        m.rotation = 0;
+
         m.initialize(parentGroup);
         return m;
     },
@@ -40,9 +43,38 @@ var ZoomScroll = {
         me.zoomUnit.setText(me.fmtUnit(me.zoom));
     },
 
+    handleRotate: func (rotationNorm, hard=0) {
+        me.rotation = rotationNorm;
+        me.updateRotation();
+    },
+
+    updateRotation: func () {
+        var portraitX = 8;
+        var landscapeX = 8;
+        var portraitY = 40;
+        var landscapeY = 768 - 32 - 94;
+        var phi = me.rotation * math.pi * 0.5;
+
+        if (me.followRotation) {
+            me.group.setTranslation(
+                        portraitX + (landscapeX - portraitX) * math.sin(phi),
+                        portraitY + (landscapeY - portraitY) * (1 - math.cos(phi)))
+                    .setRotation(-phi);
+        }
+        else {
+            me.group.setTranslation(portraitX, portraitY)
+                    .setRotation(0);
+        }
+    },
+
+
+
     initialize: func (parentGroup) {
         me.group = parentGroup.createChild('group');
         canvas.parsesvg(me.group, acdir ~ "/Models/EFB/zoom-scroll-overlay.svg", {'font-mapper': font_mapper});
+        me.group.setCenter(47, 36);
+
+        me.updateRotation();
 
         me.autoCenterMarker = me.group.getElementById('autoCenterMarker');
         me.autoCenterMarker.hide();

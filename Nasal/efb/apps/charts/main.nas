@@ -22,6 +22,7 @@ var ChartsApp = {
         m.zoomScroll = nil;
         m.favorites = [];
         m.xhr = nil;
+        m.rotation = 0;
         m.baseURL = 'http://localhost:7675/';
         return m;
     },
@@ -109,6 +110,7 @@ var ChartsApp = {
         var errorItems = [];
         foreach (var err; errs) {
             if (typeof(err) == 'scalar') {
+                err = err ~ ''; # Make sure it's really a string
                 if (substr(err, 0, 7) == 'http://' or
                     substr(err, 0, 8) == 'https://') {
                     append(errorItems, H.p(H.a({'href': err}, err)));
@@ -169,7 +171,7 @@ var ChartsApp = {
         me.contentGroup.removeAllChildren();
         me.rootWidget.removeAllChildren();
 
-        me.pager = Pager.new(me.contentGroup);
+        me.pager = Pager.new(me.contentGroup, 1);
         me.rootWidget.appendChild(me.pager);
         me.pager.setCurrentPage(me.currentPage);
         me.pager.setNumPages(me.numPages);
@@ -312,6 +314,11 @@ var ChartsApp = {
         me.makeClickable([512 - 32, 32, 512, 64], what);
     },
 
+    rotate: func (rotationNorm, hard=0) {
+        call(BaseApp.rotate, [rotationNorm, hard], me);
+        me.rotation = rotationNorm;
+    },
+
     getZoom: func {
         return math.pow(2.0, me.zoomLevel);
     },
@@ -337,7 +344,8 @@ var ChartsApp = {
     makeZoomScrollOverlay: func () {
         var self = me;
 
-        me.zoomScroll = ZoomScroll.new(me.contentGroup);
+        me.zoomScroll = ZoomScroll.new(me.contentGroup, 1);
+        me.zoomScroll.rotate(me.rotation, 1);
         me.zoomScroll.setZoom(me.getZoom());
         me.zoomScroll.setZoomFormat(
             func (zoom) {
@@ -347,8 +355,14 @@ var ChartsApp = {
         );
 
         me.zoomScroll.onScroll.addListener(func (data) {
-            self.sx += data.x * 16;
-            self.sy += data.y * 16;
+            if (me.rotation) {
+                self.sx -= data.y * 16;
+                self.sy += data.x * 16;
+            }
+            else {
+                self.sx += data.x * 16;
+                self.sy += data.y * 16;
+            }
             self.updateScroll();
         });
         me.zoomScroll.onZoom.addListener(func (data) {
@@ -403,7 +417,8 @@ var ChartsApp = {
         var imageGroup = me.contentGroup.createChild('group');
 
         var makePager = func {
-            self.pager = Pager.new(self.contentGroup);
+            self.pager = Pager.new(self.contentGroup, 1);
+            self.pager.rotate(me.rotation, 1);
             self.rootWidget.appendChild(self.pager);
             self.pager.setCurrentPage(self.currentPage);
             self.pager.setNumPages(self.numPages);
