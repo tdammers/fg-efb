@@ -7,6 +7,7 @@ var KneepadApp = {
         var m = BaseApp.new(masterGroup);
         m.parents = [me] ~ m.parents;
         m.scrollY = 0;
+        m.maxScrollY = 0;
         m.text = [];
         m.editing = 0;
         m.cursor = { row: 0, col: 0 };
@@ -88,14 +89,31 @@ var KneepadApp = {
         return math.floor((y - me.metrics.marginTop) / me.metrics.lineHeight - 0.5);
     },
 
+    confineScroll: func {
+        me.maxScrollY = (size(me.text) + 1) * me.metrics.lineHeight - (768 - 256);
+        me.scrollY = math.min(me.maxScrollY, me.scrollY);
+        me.scrollY = math.max(0, me.scrollY);
+    },
+
     wheel: func (axis, amount) {
         if (axis == 0) {
             me.scrollY += me.metrics.lineHeight * amount;
-            me.scrollY = math.min(size(me.text) * me.metrics.lineHeight - (740 - 256), me.scrollY);
-            me.scrollY = math.max(0, me.scrollY);
+            me.confineScroll();
             me.textGroup.setTranslation(0, -me.scrollY);
             me.updateCursor();
         }
+    },
+
+    scrollToRow: func (row) {
+        var y = me.rowToY(row);
+        if (y - me.scrollY < me.metrics.marginTop + me.metrics.lineHeight) {
+            me.scrollY = y;
+        }
+        if (y - me.scrollY >= 740 - 256 - me.metrics.lineHeight) {
+            me.scrollY = y - 740 + 256 + me.metrics.lineHeight;
+        }
+        me.confineScroll();
+        me.textGroup.setTranslation(0, -me.scrollY);
     },
 
     measureText: func (txt) {
@@ -151,7 +169,10 @@ var KneepadApp = {
     },
 
     updateCursor: func {
-        me.cursorInfo.setText(sprintf("%3i:%3i %5i", me.cursor.row, me.cursor.col, me.scrollY));
+        var scrollPercent = 0;
+        if (me.maxScrollY > 0)
+            scrollPercent = me.scrollY / me.maxScrollY * 100;
+        me.cursorInfo.setText(sprintf("%3i:%3i %3i%%", me.cursor.row, me.cursor.col, scrollPercent));
         if (me.editing) {
             var xy = me.cursorToXY();
             me.cursorElem
@@ -181,6 +202,7 @@ var KneepadApp = {
             substr(me.text[me.cursor.row], me.cursor.col);
         me.textElems[me.cursor.row].setText(me.text[me.cursor.row]);
         me.cursor.col += 1;
+        me.scrollToRow(me.cursor.row);
         me.updateCursor();
     },
 
@@ -217,6 +239,7 @@ var KneepadApp = {
         me.cursor.row += 1;
         me.cursor.col = 0;
 
+        me.scrollToRow(me.cursor.row);
         me.updateCursor();
     },
 
@@ -258,6 +281,7 @@ var KneepadApp = {
             me.textElems[me.cursor.row].setText(me.text[me.cursor.row]);
             me.cursor.col -= 1;
         }
+        me.scrollToRow(me.cursor.row);
         me.updateCursor();
     },
 
