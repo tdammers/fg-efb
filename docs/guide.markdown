@@ -14,7 +14,7 @@ Unfortunately, the EFB needs to be integrated with each aircraft type
 individually; it is not possible (at least not currently) to install it as an
 add-on. If you are an aircraft developer interested in adding the EFB to your
 aircraft, see the section "Installing Into Your Aircraft" in the included
-README.markdown.
+[README](https://github.com/tdammers/fg-efb#readme).
 
 ## General Usage
 
