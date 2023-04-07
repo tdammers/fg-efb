@@ -7,8 +7,11 @@
 The FG EFB simulates, within the constraints of what is possible in FlightGear,
 a consumer-grade tablet running Electronic Flight Bag (EFB) software to replace
 paper documents in the cockpit.
+
 This repository is intended for aircraft developers who wish to incorporate a
 GearPad in their aircraft; it is not designed as an add-on.
+
+For a usage guide, see [the included guide](./docs/guide.markdown).
 
 ## Installation
 
