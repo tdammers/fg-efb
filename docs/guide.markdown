@@ -123,6 +123,9 @@ is configured for the correct URL. With any error screen, you can use the
 "reload" icon in the top right corner to try again after you have fixed the
 problem.
 
+Note that the companion URL needs to be configured separately for each aircraft
+type, due to the way FlightGear stores such configurations.
+
 ## The Kneepad App
 
 The Kneepad app is a simple text editor, designed to replace a paper kneepad
