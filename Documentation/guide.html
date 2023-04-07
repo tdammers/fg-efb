@@ -1,0 +1,177 @@
+<style>
+html {
+    font-family: sans;
+    font-size: 12pt;
+    line-height: 1.5;
+}
+
+body {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 60rem;
+}
+
+figure {
+    float: right;
+    clear: both;
+    width: auto;
+    min-width: 360px;
+    margin: 0 0 2rem 2rem;
+    display: block;
+}
+
+figure img {
+    max-width: 500px;
+    max-height: 500px;
+    display: block;
+    border-radius: 1rem;
+    border: solid 1px black;
+}
+
+figcaption {
+    display: block;
+    max-width: 100%;
+    padding: 0.5rem 1.5rem;
+    text-align: center;
+}
+
+h1, h2, h3 {
+    clear: both;
+}
+
+h2 {
+    border-bottom: solid 2px silver;
+    margin-top: 2rem;
+}
+</style>
+<h1 id="fg-efb-a.k.a.-gearpad"><code>fg-efb</code>, a.k.a. GearPad</h1>
+<h2 id="introduction">Introduction</h2>
+<p>The FlightGear EFB (called “GearPad” in-sim) is a simulation of a fictional consumer-grade device configured as an Electronic Flight Bag (EFB). It provides an extensible platform for all sorts of applications, shipping with a few aircraft-independent apps, and providing an extension mechanism by which aircraft developers can add their own apps.</p>
+<h2 id="installation">Installation</h2>
+<p>Unfortunately, the EFB needs to be integrated with each aircraft type individually; it is not possible (at least not currently) to install it as an add-on. If you are an aircraft developer interested in adding the EFB to your aircraft, see the section “Installing Into Your Aircraft” in the included README.markdown.</p>
+<h2 id="general-usage">General Usage</h2>
+<figure>
+<img src="img/home-screen.jpg" alt="" /><figcaption>The EFB <strong>Home Screen</strong>,<br/>as configured in the E-Jet family<br/>(apps may differ)</figcaption>
+</figure>
+<p>The EFB starts up showing the home screen, from where you can launch any of the applications.</p>
+<p>It works mostly like a typical real-world tablet device, however, due to the hardware and software limitations of the FlightGear platform, interactions and UI had to be redesigned a little.</p>
+<p>Simulated inputs work as follows:</p>
+<ul>
+<li>Clicking on the screen with the primary mouse button (usually the left) simulates tapping the screen.</li>
+<li>Using the scroll wheel while hovering over the screen simulates either “pinch zoom” or “vertical swipe”; the behavior is defined per application (e.g., in the Maps app, the scroll wheel controls zoom, whereas in the Kneepad app, it scrolls through the text).</li>
+<li>Clicking the frame with the primary mouse button rotates the device. Some apps will detect this and reconfigure themselves for landscape mode, but not all of them support this.</li>
+<li>Using the scroll wheel while hovering over the case (not the screen) adjusts screen brightness.</li>
+<li>Middle-click on either the case or the screen reloads the EFB code and resets the device (this is primarily a debugging feature and will be removed or disabled by default in the future).</li>
+<li>If ‘keyboard grabbing’ is enabled in the settings, whenever an on-screen keyboard is active, the EFB will capture most physical keyboard inputs and redirect them to the on-screen keyboard.</li>
+</ul>
+<h3 id="ui-elements-of-the-home-screen">UI Elements of the Home Screen</h3>
+<figure>
+<img src="img/home-screen-annotated.jpg" alt="" /><figcaption>UI Elements of the Home Screen</figcaption>
+</figure>
+<h4 id="status-bar">Status Bar</h4>
+<p>The status bar reflects device status, like in a real mobile device. Possible indicators include:</p>
+<ul>
+<li>The <strong>Clock</strong>, showing the current in-sim local time</li>
+<li>A <strong>Battery</strong> indicator; battery charge is not currently simulated, so the battery indicator always shows “100%”.</li>
+<li>A <strong>Connection Strength</strong> indicator; connection strength is not currently simulated, so it always shows a perfect signal.</li>
+<li>A <strong>Keyboard Grab</strong> indicator (shaped like a key), which appears when the device has grabbed the physical keyboard, as a reminder that FG’s normal keybindings are temporarily suspended.</li>
+</ul>
+<h4 id="app-icons">App Icons</h4>
+<p>These should be self explanatory - “tap” an app icon to start or foreground that app.</p>
+<h4 id="navigation-buttons-softbuttons">Navigation Buttons (“Softbuttons”)</h4>
+<ul>
+<li>The <strong>back button</strong> (left arrow) implements an application-defined “back” action, usually either navigating to a previous page, or hiding the on-screen keyboard.</li>
+<li>The <strong>home button</strong> (circle) takes you back to the home screen and suspends the currently active app.</li>
+<li>The <strong>app switcher button</strong> (square) currently does nothing. The plan for it is to open an app switching mode, where you can scroll through open apps, switch between them, and close them.</li>
+</ul>
+<h2 id="the-charts-app">The Charts App</h2>
+<figure>
+<img src="img/charts-dir.jpg" alt="" /><figcaption>Charts app showing the main directory</figcaption>
+</figure>
+<p>The Charts app simulates a set of charts stored on the device; however, because most people don’t have a stack of aviation charts on their disk, let alone prepared for FG usage, we need to go through an external <a href="https://github.com/tdammers/fg-efb-server">companion app</a>, which pulls charts from public eAIP websites, and converts them from PDF (which FlightGear does not understand) to JPG (which can easily be used as textures in FlightGear). The companion app also takes care of converting the variety of eAIP websites out there into a somewhat uniform structure.</p>
+<p>The first thing you’ll see if everything is configured correctly is a directory listing. The top row is special: the “Home” icon takes you back to the top-level directory, the “Favorites” button shows you the charts you have currently favorited. Other than that, clicking on any folder icon takes you to that folder, and clicking on a chart icon shows that chart.</p>
+<p>The “back” softbutton takes you back to the previously viewed directory.</p>
+<p style="clear: both"/>
+<figure>
+<img src="img/charts-chartview.jpg" alt="" /><figcaption>Charts app showing a chart</figcaption>
+</figure>
+<p>When viewing a chart, some extra controls will show: - a zoom/scroll control in the top-left corner, which does what you would expect - a pager on the bottom, also fairly self-explanatory - a “favorite” star in the top-right corner, which you can use to favorite or un-favorite this chart.</p>
+<p style="clear: both"/>
+<figure>
+<img src="img/charts-error.jpg" alt="" /><figcaption>Charts app error</figcaption>
+</figure>
+<p>Should you see this error message, then that means the companion app couldn’t be reached (see above); make sure it is installed and running, and that the EFB is configured for the correct URL. With any error screen, you can use the “reload” icon in the top right corner to try again after you have fixed the problem.</p>
+<h2 id="the-kneepad-app">The Kneepad App</h2>
+<p>The Kneepad app is a simple text editor, designed to replace a paper kneepad for taking notes while flying.</p>
+<figure>
+<img src="img/kneepad-blank.jpg" alt="" /><figcaption>Kneepad app <strong>startup screen</strong></figcaption>
+</figure>
+<p>By default, it starts up to a fairly spartan screen, with just an empty off-white text area, and a menu with a single icon (the trash can).</p>
+<p>From here, you can click the text area to start typing; an on-screen keyboard will appear, and you can enter text. You can also click the trash can icon to clear the kneepad - but careful, there is currently no “undo”, so if you had anything important in there, it will be lost. Future versions will probably feature “undo”, and may also be able to save and restore kneepad contents.</p>
+<figure>
+<img src="img/kneepad-editing.jpg" alt="" /><figcaption>Kneepad app in <strong>text entry mode</strong>.<br/>Note the keycap icon in the status bar,<br/>indicating that the physical keyboard<br/>is currently grabbed</figcaption>
+</figure>
+<p>To exit text entry mode, click the “back” softbutton; if keyboard grabbing is enabled, the Esc key will also exit text entry mode.</p>
+<p>Due to the limitations of the FG platform, it is not currently possible to select text, copy-paste, etc.; I still have to think about a good UX for that.</p>
+<p>Cursor keys are not currently captured, not even in keyboard grabbing mode, so if you need to move around, you have to click to move the cursor.</p>
+<p>In both modes, the scroll wheel will move the view up and down.</p>
+<p>The position indicator in the top right corner shows you the current cursor position; it will be grey in view mode, black in text entry mode.</p>
+<h2 id="the-maps-app">The Maps App</h2>
+<figure>
+<img src="img/maps-centered.jpg" alt="" /><figcaption>Maps app,<br/>auto-centered</figcaption>
+</figure>
+<p>The Maps app displays the current position and orientation on a moving map.</p>
+<p>The zoom/scroll controls in the top-left corner work as you’d expect. Zooming can also be achieved with the scroll wheel.</p>
+<h4 id="auto-zooming">Auto-zooming</h4>
+<figure>
+<img src="img/maps-scrolled.jpg" alt="" /><figcaption>Maps app,<br/>manually scrolled</figcaption>
+</figure>
+<p>Clicking the square in the middle of the scroll arrow buttons will revert the map to auto-scrolling mode, indicated by the red position symbol on the center button. Scrolling in any direction will disable auto-scrolling.</p>
+<h4 id="map-tile-caching">Map Tile Caching</h4>
+<p>Map tiles are downloaded from OpenStreetMap tile servers, and cached locally in <code>~/.fgfs/cache/maps/osm-tile</code> (or the equivalent on your OS). In the rare event that things get borked up, you can delete that directory, but be advised that this will cause all map tiles to be re-downloaded the next time you look at them in the EFB.</p>
+<h2 id="the-paperwork-app">The Paperwork App</h2>
+<p>The Paperwork app replaces the physical Operational Flight Plan, allowing pilots to view and fill in these documents digitally.</p>
+<figure>
+<img src="img/paperwork-start.jpg" alt="" /><figcaption>Paperwork Startup Menu</figcaption>
+</figure>
+<p>When starting up, the Paperwork app will present a menu from where you can select one of the available OFP’s it has found. It will search in the following locations (or their equivalents on your OS):</p>
+<ul>
+<li><code>~/.fgfs/Export/simbrief.xml</code> (presented as “Load from SimBrief”)</li>
+<li><code>~/.fgfs/Export/OFP/*.xml</code> (presented by their respective file names)</li>
+</ul>
+<p>Clicking any of these choices will “load” the OFP as the “Current OFP”. Careful; the app does not currently support saving your entered data (this is planned for a future release though), and loading another flight plan will discard the current one.</p>
+<h4 id="importing-from-simbrief">Importing from SimBrief</h4>
+<p>Note that the Paperwork app <strong>does not fetch briefings from SimBrief itself;</strong> it only loads XML briefings from the local disk.</p>
+<p>You can use the <a href="https://github.com/tdammers/fg-simbrief-addon/">SimBrief Importer add-on</a> to download OFP briefings in XML format directly from SimBrief; the addon will store the briefing as <code>simbrief.xml</code> in the exact location where the Paperwork app expects it.</p>
+<p>You can also manually navigate to <code>https://www.simbrief.com/api/xml.fetcher.php?username={username}</code> (replace <code>{username}</code> with your SimBrief username) and save the downloaded XML file in <code>~/.fgfs/Export/OFP/</code>.</p>
+<h3 id="opening-an-ofp">Opening an OFP</h3>
+<figure>
+<img src="img/paperwork-loaded.jpg" alt="" /><figcaption>Paperwork Startup Menu,<br/>OFP loaded successfully</figcaption>
+</figure>
+<p>Once an OFP has been loaded successfully, it will show up in the “Current OFP” section, now displaying the title as it appears inside the OFP itself. Clicking that button will open the OFP and allow you to view and edit it.</p>
+<h3 id="view-mode">View Mode</h3>
+<figure>
+<img src="img/paperwork-view.jpg" alt="" /><figcaption>Paperwork in <strong>OFP View Mode</strong></figcaption>
+</figure>
+<figure>
+<img src="img/paperwork-toc.jpg" alt="" /><figcaption>Paperwork showing the <strong>TOC Pane</strong></figcaption>
+</figure>
+<p>In view mode, you can read the entire OFP in all its glory. The arrow on the left will open the TOC Pane (table of contents), which gives quick access to the various sections of the OFP. The pager at the bottom works as usual.</p>
+<p>Clicking any of the grey boxes with dots will switch to entry mode, where you can type directly into the OFP.</p>
+<h3 id="entry-mode">Entry Mode</h3>
+<figure>
+<img src="img/paperwork-entry.jpg" alt="" /><figcaption>Paperwork in <strong>Entry Mode</strong></figcaption>
+</figure>
+<p>In entry mode, the on-screen keyboard works as usual, and of course if keyboard grabbing is available, the physical keyboard can be used too. To exit entry mode:</p>
+<ul>
+<li>Use the Enter key to confirm your entry, or:</li>
+<li>Press Esc on the physical keyboard (if grabbed) to cancel the entry, or:</li>
+<li>Click the entry field again to cancel the entry, or:</li>
+<li>Click a different entry field to cancel the current entry and start editing the other field, or:</li>
+<li>Use the TOC Pane or pager to navigate away from the current page.</li>
+</ul>
+<h3 id="device-rotation">Device Rotation</h3>
+<figure>
+<img src="img/paperwork-map.jpg" alt="" /><figcaption>Paperwork showing a map<br/>in <strong>landscape orientation</strong></figcaption>
+</figure>
+<p>…is partially supported. When the device is rotated into landscape mode, the OFP display orientation does not change, which is useful for the maps sections (which are printed in landscape orientation). The pager will flip around for easy page-flipping, however the TOC Pane and on-screen keyboard do not, so if you need to enter anything, it’s best to put the device back into a portrait orientation.</p>
