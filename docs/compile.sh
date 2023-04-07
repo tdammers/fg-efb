@@ -24,4 +24,4 @@ done
     cat src/style.css
     echo '</style>'
     pandoc -f markdown -t html guide.markdown
-) > guide.html
+) > index.html
