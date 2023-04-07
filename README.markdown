@@ -61,6 +61,9 @@ directory into the EFB project.
         <efb>
             <file>Aircraft/{your aircraft directory}/Nasal/efb.nas</file>
         </efb>
+        <keyboardHooks>
+            <file>Aircraft/{your aircraft directory}/Nasal/efb/keyboardHooks.nas</file>
+        </keyboardHooks>
     ```
   - In `/sim/systems`:
     ```xml
