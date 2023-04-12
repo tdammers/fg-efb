@@ -7,6 +7,13 @@ then
     echo "Please specify an aircraft directory."
 fi
 
+# directories
+mkdir -p "$AIRCRAFT_DIR/Nasal/html"
+mkdir -p "$AIRCRAFT_DIR/Nasal/efb"
+mkdir -p "$AIRCRAFT_DIR/Nasal/efbapps"
+mkdir -p "$AIRCRAFT_DIR/Models/EFB"
+mkdir -p "$AIRCRAFT_DIR/Fonts/SteveHand"
+
 # dependencies
 rsync -r --delete "$SRC_DIR/Nasal/html/" "$AIRCRAFT_DIR/Nasal/html/" --exclude ".git"
 
@@ -16,4 +23,3 @@ rsync -r "$SRC_DIR/Nasal/efb.nas" "$AIRCRAFT_DIR/Nasal/efb.nas"
 rsync -r "$SRC_DIR/Systems/EFB.xml" "$AIRCRAFT_DIR/Systems/EFB.xml"
 rsync -r --delete "$SRC_DIR/Models/EFB/" "$AIRCRAFT_DIR/Models/EFB/"
 rsync -r --delete "$SRC_DIR/Fonts/SteveHand/" "$AIRCRAFT_DIR/Fonts/SteveHand/"
-mkdir -p "$AIRCRAFT_DIR/Nasal/efbapps"
