@@ -395,6 +395,28 @@ var EFB = {
                         .setFont(font_mapper('sans', 'normal'))
                         .setFontSize(20, 1)
                         .setTranslation(centerX, -imgH * 0.5 - 20);
+
+                    var trashBox = self.carouselGroup.createChild('path')
+                                       .rect(
+                                            centerX - imgW * 0.5 - self.metrics.carouselPadding * 0.5,
+                                            self.metrics.carouselH + self.metrics.carouselPadding * 0.5,
+                                            imgW + self.metrics.carouselPadding,
+                                            imgH + self.metrics.carouselPadding,
+                                            { 'border-radius': 8 })
+                                        .setColorFill(1, 1, 1, 0.5);
+                    var trashImg = self.carouselGroup.createChild('image');
+                    trashImg.set('src', acdir ~ '/Models/EFB/icons/trash.png');
+                    trashImg.setTranslation(
+                        centerX - imgW * 0.5,
+                        self.metrics.carouselH + self.metrics.carouselPadding);
+
+                    var killWidget = Widget.new(trashBox);
+                    killWidget.setHandler(func {
+                        self.cancelCarousel();
+                        self.killApp(appInfo);
+                        self.openCarousel();
+                    });
+                    self.carouselWidget.appendChild(killWidget);
                 })(appInfo, i);
                 appInfo.app.masterGroup.setScale(0.5, 0.5);
                 appInfo.app.masterGroup.show();
@@ -488,6 +510,16 @@ var EFB = {
         me.appStack = newAppStack;
     },
 
+    removeAppFromStack: func (appInfo) {
+        var newAppStack = [];
+        foreach (var item; me.appStack) {
+            if (id(item) != id(appInfo)) {
+                append(newAppStack, item);
+            }
+        }
+        me.appStack = newAppStack;
+    },
+
     openApp: func (appInfo) {
         me.hideCurrentApp();
         me.shellGroup.hide();
@@ -500,6 +532,18 @@ var EFB = {
         me.currentApp = appInfo;
         me.pushCurrentAppToStack();
         me.showCurrentApp();
+    },
+
+    killApp: func (appInfo) {
+        me.removeAppFromStack(appInfo);
+        if (id(me.currentApp) == id(appInfo)) {
+            me.hideCurrentApp();
+            me.currentApp = nil;
+        }
+        if (appInfo.app != nil) {
+            appInfo.app.masterGroup._node.remove();
+            appInfo.app = nil;
+        }
     },
 
     handleMenu: func () {
