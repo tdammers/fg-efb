@@ -76,10 +76,11 @@ that app.
   action, usually either navigating to a previous page, or hiding the on-screen
   keyboard.
 - The **home button** (circle) takes you back to the home screen and suspends
-  the currently active app.
-- The **app switcher button** (square) currently does nothing. The plan for it
-  is to open an app switching mode, where you can scroll through open apps,
-  switch between them, and close them.
+  the currently active app. Clicking the home button again when already on the
+  home screen opens the *app switcher*, where you can manage active apps.
+- The **menu button** (square) currently does nothing. It could open the app
+  switcher (instead of having to go through the home screen), or it could
+  provide an app-specific menu function; this is as of yet undecided.
 
 ## The Charts App
 
