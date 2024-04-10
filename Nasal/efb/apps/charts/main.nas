@@ -24,6 +24,7 @@ var ChartsApp = {
         m.xhr = nil;
         m.rotation = 0;
         m.baseURL = 'http://localhost:7675/';
+        m.chartfoxTokenProp = props.globals.getNode('/chartfox/oauth/access-token', 1);
         return m;
     },
 
@@ -135,17 +136,27 @@ var ChartsApp = {
         html.showDOM(doc, renderContext);
     },
 
-    parseListing: func (listingNode) {
+    parseListing: func (xml) {
         var currentListing = [];
-        foreach (var n; listingNode.getNode('listing').getChildren()) {
-            var entry = {
-                    'path': n.getChild('path').getValue(),
-                    'name': n.getChild('name').getValue(),
-                };
+        var listingNode = xml.getNode('listing');
+        var meta = {"numPages": 0, "page": nil};
+        var entries = [];
+        if (listingNode != nil)
+            entries = listingNode.getChildren();
+        foreach (var n; entries) {
             if (n.getName() == 'directory') {
+                var entry = {
+                        'path': n.getChild('path').getValue(),
+                        'name': n.getChild('name').getValue(),
+                    };
                 entry.type = 'dir';
+                append(currentListing, entry);
             }
-            else {
+            elsif (n.getName() == 'file') {
+                var entry = {
+                        'path': n.getChild('path').getValue(),
+                        'name': n.getChild('name').getValue(),
+                    };
                 var typeNode = n.getChild('type');
                 entry.type = typeNode.getValue();
                 var metaNode = n.getChild('meta');
@@ -153,10 +164,21 @@ var ChartsApp = {
                     entry.meta = nil;
                 else
                     entry.meta = metaNode.getValue();
+                append(currentListing, entry);
             }
-            append(currentListing, entry);
+            elsif (n.getName() == 'meta') {
+                var page = n.getValue('page');
+                var numPages = n.getValue('numPages');
+                if (page != nil)
+                    meta.page = page;
+                if (numPages != nil)
+                    meta.numPages = numPages;
+            }
         }
-        return currentListing;
+        return {
+            "files": currentListing,
+            "meta": meta
+        };
     },
 
     showListing: func () {
@@ -165,9 +187,8 @@ var ChartsApp = {
         var hSpacing = 128;
         var perRow = math.floor(512 / hSpacing);
         var perColumn = math.floor((768 - 192) / lineHeight);
-        var perPage = perRow * (perColumn - 1);
-        var actualEntries = subvec(me.currentListing, me.currentPage * perPage, perPage);
-        me.numPages = math.max(1, math.ceil(size(me.currentListing) / perPage));
+        var perPage = 12;
+        var actualEntries = me.currentListing;
         me.contentGroup.removeAllChildren();
         me.rootWidget.removeAllChildren();
 
@@ -177,7 +198,7 @@ var ChartsApp = {
         me.pager.setNumPages(me.numPages);
         me.pager.pageChanged.addListener(func (data) {
             self.currentPage = data.page;
-            self.showListing(); # this deletes and recreates the pager
+            self.reloadListing(); # this deletes and recreates the pager
         });
 
         var x = 0;
@@ -401,7 +422,8 @@ var ChartsApp = {
 
     loadChartRaw: func (path, title, page, pushHistory = 1) {
         var self = me;
-        var url = me.baseURL ~ urlencode(path) ~ "?p=" ~ page;
+        var chartfoxToken = me.chartfoxTokenProp.getValue() or '';
+        var url = me.baseURL ~ urlencode(path) ~ "?p=" ~ page ~ "&chartfoxToken=" ~ chartfoxToken;
         logprint(1, 'EFB loadChart:', url);
 
         # In case we're already downloading a page: cancel the download.
@@ -495,6 +517,7 @@ var ChartsApp = {
 
     loadFavorites: func (page = 0, pushHistory = 1) {
         var path = "*FAVS*";
+        var perPage = 12;
         me.showLoadingScreen('Favorites');
         if (pushHistory and path != me.currentPath)
             append(me.history, [me.currentPath, me.currentTitle, me.currentPage]);
@@ -502,13 +525,16 @@ var ChartsApp = {
         me.currentTitle = 'Favorites';
         me.currentPage = page;
         me.pager.setCurrentPage(page);
-        me.currentListing = me.favorites;
+        me.currentListing = subvec(me.favorites, perPage * page, perPage);
+        me.numPages = math.ceiling(size(me.favorites) / perPage);
         me.showListing();
     },
 
     loadMeta: func (metaPath, page, then) {
         var self = me;
-        var url = me.baseURL ~ urlencode(metaPath);
+        var chartfoxToken = me.chartfoxTokenProp.getValue() or '';
+        var queryString = 'chartfoxToken=' ~ urlencode(chartfoxToken);
+        var url = me.baseURL ~ urlencode(metaPath) ~ '?' ~ queryString;
 
         # In case we're already downloading page metadata: cancel the download.
         if (me.currentPageMetaURL != nil) {
@@ -525,7 +551,16 @@ var ChartsApp = {
                     debug.printerror(err);
                     then(nil);
                 }
+                elsif (xmlDocument == nil) {
+                    logprint(4, "EFB: Malformed XML document.");
+                }
                 else {
+                    var metaNode = xmlDocument.getNode('/meta');
+                    if (metaNode == nil) {
+                        logprint(4, "EFB: XML error: no <meta> found.");
+                        then(nil);
+                        return;
+                    }
                     var properties = {};
                     foreach (var propNode; xmlDocument.getNode('/meta').getChildren('property')) {
                         var key = propNode.getValue('___name');
@@ -551,7 +586,9 @@ var ChartsApp = {
             return me.loadFavorites(page, pushHistory);
         }
         var self = me;
-        var url = me.baseURL ~ urlencode(path);
+        var chartfoxToken = me.chartfoxTokenProp.getValue() or '';
+        var queryString = 'chartfoxToken=' ~ urlencode(chartfoxToken) ~ '&p=' ~ page;
+        var url = me.baseURL ~ urlencode(path) ~ '?' ~ queryString;
         me.showLoadingScreen(url);
         if (pushHistory and path != me.currentPath) append(me.history, [me.currentPath, me.currentTitle, me.currentPage]);
         me.currentPath = path;
@@ -603,7 +640,10 @@ var ChartsApp = {
                     ]);
             }
             else {
-                self.currentListing = self.parseListing(listingNode);
+                listing = self.parseListing(listingNode);
+                self.currentListing = listing.files;
+                self.page = listing.meta.page;
+                self.numPages = listing.meta.numPages;
                 self.showListing();
             }
         };
