@@ -5,8 +5,11 @@ logprint(3, "EFB main module start");
 # Un-grab the keyboard in case it was still grabbed by a previous instance
 props.globals.getNode('/instrumentation/efb/keyboard-grabbed', 1).setValue(0);
 
+var fgdir = getprop('/sim/fg-home');
+
 var systemAppBasedir = acdir ~ '/Nasal/efb/apps';
 var customAppBasedir = acdir ~ '/Nasal/efbapps';
+var globalAppBasedir = fgdir ~ '/Export/efbapps';
 
 # Compatibility shim: canvasToLocal
 if (!contains(globals.canvas.Element, 'canvasToLocal')) {
@@ -105,7 +108,11 @@ globals.efb.registerApp_ = func(basedir, key, label, iconName, class) {
         key: key,
         icon: (iconName == nil) ? (acdir ~ '/Models/EFB/icons/unknown-app.png') : (basedir ~ '/' ~ iconName),
         label: label,
-        loader: func (g) { return class.new(g); },
+        loader: func (g) {
+            var app = class.new(g);
+            app.basedir = basedir;
+            return app;
+        },
     };
 };
 
@@ -142,6 +149,7 @@ var loadAppDir = func (basedir) {
 };
 
 loadAppDir(systemAppBasedir);
+loadAppDir(globalAppBasedir);
 loadAppDir(customAppBasedir);
 
 var EFB = {
