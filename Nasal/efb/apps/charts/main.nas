@@ -2,6 +2,7 @@ include('baseApp.nas');
 include('eventSource.nas');
 include('gui/pager.nas');
 include('gui/zoomScroll.nas');
+include('gui/textbox.nas');
 include('/html/main.nas');
 
 var ChartsApp = {
@@ -12,7 +13,9 @@ var ChartsApp = {
         m.currentListing = nil;
         m.currentPage = 0;
         m.numPages = nil;
+        m.searchPath = nil;
         m.currentPath = "";
+        m.currentQuery = nil;
         m.currentTitle = "Charts";
         m.currentPageURL = nil;
         m.currentPageMetaURL = nil;
@@ -34,7 +37,7 @@ var ChartsApp = {
             if (popped[0] == "*FAVS*")
                 me.loadFavorites(popped[2], 0);
             else
-                me.loadListing(popped[0], popped[1], popped[2], 0);
+                me.loadListing(popped[0], popped[1], popped[2], 0, popped[3]);
         }
     },
 
@@ -63,6 +66,7 @@ var ChartsApp = {
         me.sy = 0.0;
         me.img = nil;
         me.contentGroup.removeAllChildren();
+        me.hideKeyboard();
     },
 
     showLoadingScreen: func (url=nil) {
@@ -139,7 +143,7 @@ var ChartsApp = {
     parseListing: func (xml) {
         var currentListing = [];
         var listingNode = xml.getNode('listing');
-        var meta = {"numPages": 0, "page": nil};
+        var meta = {"numPages": 0, "page": nil, searchPath: nil};
         var entries = [];
         if (listingNode != nil)
             entries = listingNode.getChildren();
@@ -169,10 +173,13 @@ var ChartsApp = {
             elsif (n.getName() == 'meta') {
                 var page = n.getValue('page');
                 var numPages = n.getValue('numPages');
+                var searchPath = n.getValue('searchPath');
                 if (page != nil)
                     meta.page = page;
                 if (numPages != nil)
                     meta.numPages = numPages;
+                if (searchPath != nil)
+                    meta.searchPath = searchPath;
             }
         }
         return {
@@ -183,7 +190,7 @@ var ChartsApp = {
 
     showListing: func () {
         var self = me;
-        var lineHeight = 144;
+        var lineHeight = 132;
         var hSpacing = 128;
         var perRow = math.floor(512 / hSpacing);
         var perColumn = math.floor((768 - 192) / lineHeight);
@@ -191,6 +198,19 @@ var ChartsApp = {
         var actualEntries = me.currentListing;
         me.contentGroup.removeAllChildren();
         me.rootWidget.removeAllChildren();
+        me.hideKeyboard();
+
+        if (me.searchPath != nil) {
+            me.searchBox = Textbox.new(me.contentGroup, 10, 100, 400);
+            me.searchBox.onStartEntry = func { self.showKeyboard(func (key) { self.rootWidget.key(key); }); };
+            me.searchBox.onEndEntry = func { self.hideKeyboard(); };
+            me.searchBox.onConfirm = func (searchQuery) {
+                if (self.searchPath != nil) {
+                    self.loadListing(self.searchPath, 'Search Results', 0, 1, searchQuery);
+                }
+            };
+            me.rootWidget.appendChild(me.searchBox);
+        }
 
         me.pager = Pager.new(me.contentGroup, 1);
         me.rootWidget.appendChild(me.pager);
@@ -219,6 +239,9 @@ var ChartsApp = {
             .setFont("LiberationFonts/LiberationSans-Regular.ttf")
             .setFontSize(32);
         y += 64;
+
+        y += 30; # make room for search bar
+
         y += 16;
         var iconNames = {
             'dir': 'folder.png',
@@ -410,11 +433,13 @@ var ChartsApp = {
         var self = me;
         if (metaPath == nil) {
             me.numPages = nil;
+            me.searchPath = nil;
             me.loadChartRaw(path, title, page, pushHistory);
         }
         else {
             me.loadMeta(metaPath, page, func (numPages) {
                 self.numPages = numPages;
+                self.searchPath = nil;
                 self.loadChartRaw(path, title, page, pushHistory);
             });
         }
@@ -435,7 +460,7 @@ var ChartsApp = {
         me.contentGroup.removeAllChildren();
         me.showLoadingScreen(url);
         if (pushHistory)
-            append(me.history, [me.currentPath, me.currentTitle, me.currentPage]);
+            append(me.history, [me.currentPath, me.currentTitle, me.currentPage, me.currentQuery]);
         me.currentPath = path;
         me.currentTitle = title;
         me.currentPage = page;
@@ -484,7 +509,7 @@ var ChartsApp = {
     },
 
     reloadListing: func () {
-        me.loadListing(me.currentPath, me.currentTitle, me.currentPage, 0);
+        me.loadListing(me.currentPath, me.currentTitle, me.currentPage, 0, me.currentQuery);
     },
 
     addToFavorites: func (type, path, title) {
@@ -520,13 +545,14 @@ var ChartsApp = {
         var perPage = 12;
         me.showLoadingScreen('Favorites');
         if (pushHistory and path != me.currentPath)
-            append(me.history, [me.currentPath, me.currentTitle, me.currentPage]);
+            append(me.history, [me.currentPath, me.currentTitle, me.currentPage, me.currentQuery]);
         me.currentPath = path;
         me.currentTitle = 'Favorites';
         me.currentPage = page;
         me.pager.setCurrentPage(page);
         me.currentListing = subvec(me.favorites, perPage * page, perPage);
-        me.numPages = math.ceiling(size(me.favorites) / perPage);
+        me.numPages = math.ceil(size(me.favorites) / perPage);
+        me.searchPath = nil;
         me.showListing();
     },
 
@@ -581,19 +607,24 @@ var ChartsApp = {
             });
     },
 
-    loadListing: func (path, title, page, pushHistory = 1) {
+    loadListing: func (path, title, page, pushHistory = 1, searchQuery = nil) {
         if (path == '*FAVS*') {
             return me.loadFavorites(page, pushHistory);
         }
         var self = me;
         var chartfoxToken = me.chartfoxTokenProp.getValue() or '';
         var queryString = 'chartfoxToken=' ~ urlencode(chartfoxToken) ~ '&p=' ~ page;
+        if (searchQuery != nil) {
+            queryString = queryString ~ '&q=' ~ urlencode(searchQuery);
+        }
         var url = me.baseURL ~ urlencode(path) ~ '?' ~ queryString;
+        debug.dump(url);
         me.showLoadingScreen(url);
-        if (pushHistory and path != me.currentPath) append(me.history, [me.currentPath, me.currentTitle, me.currentPage]);
+        if (pushHistory and path != me.currentPath) append(me.history, [me.currentPath, me.currentTitle, me.currentPage, me.currentQuery]);
         me.currentPath = path;
         me.currentTitle = title;
         me.currentPage = page;
+        me.currentQuery = searchQuery;
 
         var filename = getprop('/sim/fg-home') ~ "/Export/efb_listing.xml";
         var onFailure = func (r) {
@@ -644,6 +675,7 @@ var ChartsApp = {
                 self.currentListing = listing.files;
                 self.page = listing.meta.page;
                 self.numPages = listing.meta.numPages;
+                self.searchPath = listing.meta.searchPath;
                 self.showListing();
             }
         };

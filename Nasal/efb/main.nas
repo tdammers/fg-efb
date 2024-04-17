@@ -430,7 +430,7 @@ var EFB = {
                                 .setColor(0, 0, 0);
                     appInfo.carouselClickbox = box;
                     var clickWidget = Widget.new(box);
-                    clickWidget.setHandler(func {
+                    clickWidget.setClickHandler(func {
                         if (self.carousel.selectedAppIndex == i) {
                             self.cancelCarousel();
                             self.openApp(appInfo);
@@ -473,7 +473,7 @@ var EFB = {
                         self.metrics.carouselH + self.metrics.carouselPadding);
 
                     var killWidget = Widget.new(trashBox);
-                    killWidget.setHandler(func {
+                    killWidget.setClickHandler(func {
                         self.cancelCarousel();
                         self.killApp(appInfo);
                         self.openCarousel();
