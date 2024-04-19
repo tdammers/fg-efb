@@ -67,7 +67,7 @@ var Textbox = {
                               .setColor(0, 0, 0)
                               .setText(me.text)
                               .setAlignment('left-baseline');
-        me.textElem.setTranslation(me.metrics.paddingX, me.metrics.height * 0.5 + textHeight * 0.3 + me.metrics.paddingY);
+        me.textElem.setTranslation(me.metrics.paddingX, me.metrics.height * 0.5 + textHeight * 0.4);
 
         me.cursorElem = me.group.createChild('path')
                         .setColorFill(0, 0, 0)

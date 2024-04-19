@@ -201,15 +201,25 @@ var ChartsApp = {
         me.hideKeyboard();
 
         if (me.searchPath != nil) {
-            me.searchBox = Textbox.new(me.contentGroup, 10, 100, 400);
-            me.searchBox.onStartEntry = func { self.showKeyboard(func (key) { self.rootWidget.key(key); }); };
-            me.searchBox.onEndEntry = func { self.hideKeyboard(); };
-            me.searchBox.onConfirm = func (searchQuery) {
+            var doSearch = func (searchQuery) {
                 if (self.searchPath != nil) {
                     self.loadListing(self.searchPath, 'Search Results', 0, 1, searchQuery);
                 }
             };
-            me.rootWidget.appendChild(me.searchBox);
+
+            var searchBox = Textbox.new(me.contentGroup, 10, 100, 400);
+            searchBox.onStartEntry = func { self.showKeyboard(func (key) { self.rootWidget.key(key); }); return 0; };
+            searchBox.onEndEntry = func { self.hideKeyboard(); return 0; };
+            searchBox.onConfirm = doSearch;
+            me.rootWidget.appendChild(searchBox);
+
+            var searchButton = Button.new(me.contentGroup, "Search", 414, 100, 90, 28);
+            searchButton.setClickHandler(func {
+                self.hideKeyboard();
+                doSearch(searchBox.text);
+                return 0;
+            });
+            me.rootWidget.appendChild(searchButton);
         }
 
         me.pager = Pager.new(me.contentGroup, 1);
@@ -314,7 +324,7 @@ var ChartsApp = {
                 else {
                     what = func () { self.loadChart(entry.path, entry['meta'], entry.name, 0, 1); return 0; };
                 }
-                me.makeClickable([ x, y, x + hSpacing, y + lineHeight ], what);
+                me.makeClickable([ x, y, x + hSpacing, y + lineHeight ], what, self.rootWidget);
             })(entry);
             x += hSpacing;
             if (x > 512 - hSpacing) {
