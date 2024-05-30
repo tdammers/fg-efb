@@ -5,6 +5,19 @@ include('gui/zoomScroll.nas');
 include('gui/textbox.nas');
 include('/html/main.nas');
 
+var geoMap = func (georef, latDeg, lonDeg) {
+    var r = 6378137.0;
+    var geoX = r * lonDeg * D2R;
+    var geoY = r * math.ln(math.tan(math.pi / 4 + latDeg * D2R / 2));
+    var xAbs = geoX - georef.tx;
+    var yAbs = geoY - georef.ty;
+    var s = math.sin(-georef.ta);
+    var c = math.cos(-georef.ta);
+    var x = (xAbs * c - yAbs * s) / georef.k;
+    var y = -(yAbs * c + xAbs * s) / georef.k;
+    return [x, y];
+};
+
 var ChartsApp = {
     new: func(masterGroup) {
         var m = BaseApp.new(masterGroup);
@@ -22,7 +35,10 @@ var ChartsApp = {
         m.history = [];
         m.zoomLevel = 0;
         m.img = nil;
+        m.img = nil;
         m.zoomScroll = nil;
+        m.aircraftMarker = nil;
+        m.aircraftMarkerTimer = nil;
         m.favorites = [];
         m.xhr = nil;
         m.rotation = 0;
@@ -42,6 +58,8 @@ var ChartsApp = {
     },
 
     initialize: func () {
+        var self = me;
+
         me.stylesheet = html.CSS.loadStylesheet(me.assetDir ~ 'style.css');
         me.baseURL = getprop('/instrumentation/efb/flightbag-companion-uri') or 'http://localhost:7675/';
         me.bgfill = me.masterGroup.createChild('path')
@@ -56,6 +74,10 @@ var ChartsApp = {
         me.contentGroup = me.masterGroup.createChild('group');
 
         me.loadListing("", "Charts", 0, 0);
+        me.aircraftMarkerTimer = maketimer(1, func {
+            self.updateAircraftMarker();
+        });
+
     },
 
     clear: func {
@@ -66,6 +88,9 @@ var ChartsApp = {
         me.sy = 0.0;
         me.img = nil;
         me.contentGroup.removeAllChildren();
+        me.aircraftMarker = nil;
+        if (me.aircraftMarkerTimer != nil)
+            me.aircraftMarkerTimer.stop();
         me.hideKeyboard();
     },
 
@@ -343,7 +368,7 @@ var ChartsApp = {
         me.makeClickable([512 - 32, 32, 512, 64], what);
     },
 
-    makeFavoriteIcon: func (type, path, title) {
+    makeFavoriteIcon: func (type, path, title, meta) {
         var self = me;
         var img = me.contentGroup.createChild('image')
                 .setScale(0.5, 0.5)
@@ -364,7 +389,7 @@ var ChartsApp = {
                 img.set('src', starOffIcon);
             }
             else {
-                self.addToFavorites(type, path, title);
+                self.addToFavorites(type, path, title, meta);
                 img.set('src', starOnIcon);
             }
             return 0;
@@ -381,12 +406,48 @@ var ChartsApp = {
         return math.pow(2.0, me.zoomLevel);
     },
 
+    updateAircraftMarker: func () {
+        if (me.aircraftMarker == nil) {
+            # Not in a chart view
+            return;
+        }
+
+        if (me.geoRefs == nil) {
+            # no georef data entirely
+            me.aircraftMarker.hide();
+            return;
+        }
+        var index = (me.currentPage + 1) ~ '';
+        var geoRef = me.geoRefs[index];
+        debug.dump(geoRef, me.geoRefs);
+        if (geoRef == nil) {
+            # no georef data for this page
+            debug.dump(me.geoRefs, index);
+            me.aircraftMarker.hide();
+            return;
+        }
+        (var x, var y) = geoMap(geoRef,
+                            getprop('/position/latitude-deg'),
+                            getprop('/position/longitude-deg'));
+        debug.dump(x, y);
+        debug.dump(me.imgDimensions);
+        me.aircraftMarker
+            .setTranslation(
+                256 - (me.imgDimensions[0] * 0.5 + me.sx) * me.getZoom()
+                    + (x * me.imgDimensions[1] * me.getZoom()),
+                384 - (me.imgDimensions[1] * 0.5 + me.sy) * me.getZoom()
+                    + (y * me.imgDimensions[1] * me.getZoom()))
+            .setRotation(getprop('/orientation/heading-deg') * D2R + geoRef.ta)
+            .show();
+    },
+
     updateScroll: func () {
         if (me.img == nil)
             return;
         me.img.setTranslation(
-            256 - (384 + me.sx) * me.getZoom(),
-            384 - (384 + me.sy) * me.getZoom());
+            256 - (me.imgDimensions[0] * 0.5 + me.sx) * me.getZoom(),
+            384 - (me.imgDimensions[1] * 0.5 + me.sy) * me.getZoom());
+        me.updateAircraftMarker();
     },
 
     updateZoom: func () {
@@ -414,8 +475,8 @@ var ChartsApp = {
 
         me.zoomScroll.onScroll.addListener(func (data) {
             if (me.rotation) {
-                self.sx -= data.y * 16;
-                self.sy += data.x * 16;
+                self.sx += data.y * 16;
+                self.sy -= data.x * 16;
             }
             else {
                 self.sx += data.x * 16;
@@ -444,18 +505,22 @@ var ChartsApp = {
         if (metaPath == nil) {
             me.numPages = nil;
             me.searchPath = nil;
-            me.loadChartRaw(path, title, page, pushHistory);
+            me.geoRefs = nil;
+            me.aspectRatio = 1.0;
+            me.loadChartRaw(path, metaPath, title, page, pushHistory);
         }
         else {
-            me.loadMeta(metaPath, page, func (numPages) {
+            me.loadMeta(metaPath, page, func (numPages, geoRefs, aspectRatio) {
                 self.numPages = numPages;
                 self.searchPath = nil;
-                self.loadChartRaw(path, title, page, pushHistory);
+                self.geoRefs = geoRefs;
+                self.aspectRatio = aspectRatio;
+                self.loadChartRaw(path, metaPath, title, page, pushHistory);
             });
         }
     },
 
-    loadChartRaw: func (path, title, page, pushHistory = 1) {
+    loadChartRaw: func (path, metaPath, title, page, pushHistory = 1) {
         var self = me;
         var chartfoxToken = me.chartfoxTokenProp.getValue() or '';
         var url = me.baseURL ~ urlencode(path) ~ "?p=" ~ page ~ "&chartfoxToken=" ~ chartfoxToken;
@@ -477,6 +542,20 @@ var ChartsApp = {
 
         var imageGroup = me.contentGroup.createChild('group');
 
+        me.aircraftMarker = imageGroup.createChild('path')
+                                           .moveTo(0, -10)
+                                           .lineTo(8, 10)
+                                           .lineTo(0, 5)
+                                           .lineTo(-8, 10)
+                                           .close()
+                                           .setColor(0, 0, 0)
+                                           .setColorFill(0, 1, 0)
+                                           .set('z-index', 1);
+        # me.aircraftMarker = imageGroup.createChild('path')
+        #                                    .circle(4, 0, 0)
+        #                                    .setColor(1, 0, 0)
+        #                                    .set('z-index', 1);
+
         var makePager = func {
             self.pager = Pager.new(self.contentGroup, 1);
             self.pager.rotate(me.rotation, 1);
@@ -485,7 +564,7 @@ var ChartsApp = {
             self.pager.setNumPages(self.numPages);
             self.pager.pageChanged.addListener(func (data) {
                 self.currentPage = data.page;
-                self.loadChartRaw(self.currentPath, self.currentTitle, data.page, 0); # this will remove the pager
+                self.loadChart(self.currentPath, metaPath, self.currentTitle, data.page, 0); # this will remove the pager
             });
         };
 
@@ -493,15 +572,25 @@ var ChartsApp = {
 
         downloadManager.get(url, '/efb-charts/' ~ md5(path ~ '$' ~ page) ~ '.jpg',
             func (path) {
-                me.img = imageGroup.createChild('image')
-                    .set('size[0]', 768)
-                    .set('size[1]', 768)
+                var w = 768;
+                var h = 768;
+                if (self.aspectRatio > 1.0)
+                    h /= self.aspectRatio;
+                else
+                    w *= self.aspectRatio;
+                self.imgDimensions = [w, h];
+                self.img = imageGroup.createChild('image')
+                    .set('size[0]', w)
+                    .set('size[1]', h)
                     .set('src', path);
-                me.img.setTranslation(
-                    256 - 384,
-                    384 - 384);
-                me.makeFavoriteIcon('pdf', me.currentPath, me.currentTitle);
-                me.makeZoomScrollOverlay();
+                self.img.setTranslation(
+                    256 - w * 0.5,
+                    384 - h * 0.5);
+                self.makeFavoriteIcon('pdf', self.currentPath, self.currentTitle, metaPath);
+                self.makeZoomScrollOverlay();
+                if (self.geoRefs != nil) {
+                    self.aircraftMarkerTimer.start();
+                }
             },
             func (r) {
                 self.showErrorScreen([
@@ -522,12 +611,13 @@ var ChartsApp = {
         me.loadListing(me.currentPath, me.currentTitle, me.currentPage, 0, me.currentQuery);
     },
 
-    addToFavorites: func (type, path, title) {
+    addToFavorites: func (type, path, title, meta) {
         append(me.favorites,
             {
                 type: type,
                 path: path,
-                name: title
+                name: title,
+                meta: meta,
             });
     },
 
@@ -585,7 +675,7 @@ var ChartsApp = {
                 var xmlDocument = call(io.readxml, [xmlFilename], io, {}, err);
                 if (size(err)) {
                     debug.printerror(err);
-                    then(nil);
+                    then(nil, nil, 1.0);
                 }
                 elsif (xmlDocument == nil) {
                     logprint(4, "EFB: Malformed XML document.");
@@ -594,7 +684,7 @@ var ChartsApp = {
                     var metaNode = xmlDocument.getNode('/meta');
                     if (metaNode == nil) {
                         logprint(4, "EFB: XML error: no <meta> found.");
-                        then(nil);
+                        then(nil, nil, 1.0);
                         return;
                     }
                     var properties = {};
@@ -602,17 +692,37 @@ var ChartsApp = {
                         var key = propNode.getValue('___name');
                         var val = propNode.getValue('___value');
                         properties[key] = val;
+                        printf("%s: %s", key, val);
                     }
                     var numPages = properties['Pages'];
-                    then(numPages);
+                    var geoRefs = {};
+                    var pageRot = properties['Page rot'];
+                    var origSizeStr = properties['Page size'];
+                    var origSizeParts = split(' ', origSizeStr);
+                    var origWidth = origSizeParts[0];
+                    var origHeight = origSizeParts[2];
+                    var aspectRatio = (pageRot == 90 or pageRot == 270) ? (origHeight / origWidth) : (origWidth / origHeight);
+                    printf("Aspect: %f x %f (%f:1)", origWidth, origHeight, aspectRatio);
+                    foreach (var propNode; xmlDocument.getNode('/meta').getChildren('georef')) {
+                        var geoRef = {
+                            'tx': propNode.getValue('tx'),
+                            'ty': propNode.getValue('ty'),
+                            'k': propNode.getValue('k'),
+                            'ta': propNode.getValue('ta'),
+                            'pageRotation': propNode.getValue('pageRotation'),
+                        };
+                        var refPage = propNode.getValue('page');
+                        geoRefs[refPage] = geoRef;
+                    }
+                    then(numPages, geoRefs, aspectRatio);
                 }
             },
             func (r) {
                 if (r.status >= 300) {
                     # Not-found, client error, or server error: carry on
-                    # without page count. Most likely this means the companion
+                    # without metadata. Most likely this means the companion
                     # server doesn't serve metadata yet.
-                    then(nil);
+                    then(nil, nil, 1.0);
                 }
             });
     },
