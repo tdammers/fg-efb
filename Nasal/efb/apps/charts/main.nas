@@ -549,18 +549,6 @@ var ChartsApp = {
         me.currentTitle = title;
         me.currentPage = page;
 
-        var makePager = func {
-            self.pager = Pager.new(self.contentGroup, 1);
-            self.pager.rotate(me.rotation, 1);
-            self.rootWidget.appendChild(self.pager);
-            self.pager.setCurrentPage(self.currentPage);
-            self.pager.setNumPages(self.numPages);
-            self.pager.pageChanged.addListener(func (data) {
-                self.currentPage = data.page;
-                self.loadChart(self.currentPath, metaPath, self.currentTitle, data.page, 0); # this will remove the pager
-            });
-        };
-
         downloadManager.get(url, '/efb-charts/' ~ md5(path ~ '$' ~ page) ~ '.jpg',
             func (path) {
                 me.contentGroup.removeAllChildren();
@@ -579,6 +567,18 @@ var ChartsApp = {
                 #                                    .circle(4, 0, 0)
                 #                                    .setColor(1, 0, 0)
                 #                                    .set('z-index', 1);
+
+                var makePager = func {
+                    self.pager = Pager.new(self.contentGroup, 1);
+                    self.pager.rotate(me.rotation, 1);
+                    self.rootWidget.appendChild(self.pager);
+                    self.pager.setCurrentPage(self.currentPage);
+                    self.pager.setNumPages(self.numPages);
+                    self.pager.pageChanged.addListener(func (data) {
+                        self.currentPage = data.page;
+                        self.loadChart(self.currentPath, metaPath, self.currentTitle, data.page, 0); # this will remove the pager
+                    });
+                };
 
                 makePager();
 
@@ -707,10 +707,10 @@ var ChartsApp = {
                     var numPages = properties['Pages'];
                     var geoRefs = {};
                     var pageRot = properties['Page rot'];
-                    var origSizeStr = properties['Page size'] or '';
+                    var origSizeStr = properties['Page size'];
                     var origSizeParts = split(' ', origSizeStr);
-                    var origWidth = ((size(origSizeParts) > 0) ? origSizeParts[0] : 0) or 210;
-                    var origHeight = ((size(origSizeParts) > 2) ? origSizeParts[2] : 0) or 297;
+                    var origWidth = origSizeParts[0];
+                    var origHeight = origSizeParts[2];
                     var aspectRatio = (pageRot == 90 or pageRot == 270) ? (origHeight / origWidth) : (origWidth / origHeight);
                     printf("Aspect: %f x %f (%f:1)", origWidth, origHeight, aspectRatio);
                     foreach (var propNode; xmlDocument.getNode('/meta').getChildren('georef')) {

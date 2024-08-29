@@ -589,6 +589,7 @@ var EFB = {
             var masterGroup = me.clientGroup.createChild('group');
             appInfo.app = appInfo.loader(masterGroup);
             appInfo.app.setAssetDir(appInfo.basedir ~ '/');
+            appInfo.app.efb = me;
             appInfo.app.initialize();
         }
         me.currentApp = appInfo;
